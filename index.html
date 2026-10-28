@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auditoria de Qualidade</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Chart.js for pixel-perfect dynamic chart replicating the image -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS & PapaParse for robust CSV/XLS/XLSX reading -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="header">
+        <!-- Left: File Upload & Confirm Button -->
+        <div class="header-file-upload">
+          <input type="file" id="fileInput" accept=".csv, .xls, .xlsx" class="file-input-hidden" />
+          
+          <div class="file-select-box" id="uploadDropzone" title="Clique para selecionar arquivo .csv, .xls ou .xlsx">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" class="upload-icon-sm">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <div class="file-select-info">
+              <span class="file-select-name" id="fileSelectName">Inserir planilha (.csv, .xls)</span>
+              <span class="file-select-sub" id="fileSelectSub">Arraste ou clique para selecionar</span>
+            </div>
+          </div>
+
+          <button type="button" class="btn-confirm-file btn-confirm-icon-only" id="btnConfirmFile" title="Confirmar e carregar dados">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Right: Date Badge & Dropdown Calendar -->
+        <div class="date-badge-wrapper">
+          <div class="date-badge" id="dateBadgeBtn" title="Filtrar por período de contato">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <div class="date-badge-text">
+              <span class="date-badge-title">PERÍODO</span>
+              <span class="date-range" id="headerDateRange">01/10/2026 até 31/10/2026 <span class="arrow-down" id="dateBadgeChevron">&#9662;</span></span>
+            </div>
+          </div>
+
+          <!-- Date Picker Popover Panel -->
+          <div class="calendar-popover" id="calendarPopover">
+            <div class="cal-nav-row">
+              <button type="button" class="cal-nav-btn" id="calPrevMonth" title="Mês anterior">&lsaquo;</button>
+              <div class="cal-title-selects">
+                <span class="cal-month-name" id="calMonthDisplay">Outubro</span>
+                <span class="cal-year-name" id="calYearDisplay">2026</span>
+              </div>
+              <button type="button" class="cal-nav-btn" id="calNextMonth" title="Próximo mês">&rsaquo;</button>
+            </div>
+
+            <!-- Days of Week Header (Seg - Dom) -->
+            <div class="cal-weekdays">
+              <span>Seg</span>
+              <span>Ter</span>
+              <span>Qua</span>
+              <span>Qui</span>
+              <span>Sex</span>
+              <span>Sáb</span>
+              <span>Dom</span>
+            </div>
+
+            <!-- Grid of calendar days -->
+            <div class="cal-days-grid" id="calDaysGrid"></div>
+
+            <!-- Quick Selection Preset Buttons -->
+            <div class="cal-footer-presets">
+              <button type="button" class="cal-preset-btn" id="presetThisMonth">Este Mês</button>
+              <button type="button" class="cal-preset-btn" id="presetThisYear">Este Ano</button>
+              <button type="button" class="cal-preset-btn" id="presetAllTime">Sempre</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Filter Bar -->
+      <section class="filters-row">
+        <div class="filter-group">
+          <label for="filterLoja">Loja</label>
+          <div class="custom-select-wrap">
+            <select id="filterLoja" class="filter-native-select">
+              <option value="">Todas</option>
+            </select>
+          </div>
+        </div>
+        <div class="filter-group">
+          <label for="filterUF">UF</label>
+          <div class="custom-select-wrap">
+            <select id="filterUF" class="filter-native-select">
+              <option value="">Todas</option>
+            </select>
+          </div>
+        </div>
+        <div class="filter-group">
+          <label for="filterRegional">Regional</label>
+          <div class="custom-select-wrap">
+            <select id="filterRegional" class="filter-native-select">
+              <option value="">Todas</option>
+            </select>
+          </div>
+        </div>
+        <div class="filter-group">
+          <label for="filterAnalista">Analista</label>
+          <div class="custom-select-wrap">
+            <select id="filterAnalista" class="filter-native-select">
+              <option value="">Todos</option>
+            </select>
+          </div>
+        </div>
+        <div class="filter-group">
+          <label for="filterFornecedor">Fornecedor</label>
+          <div class="custom-select-wrap">
+            <select id="filterFornecedor" class="filter-native-select">
+              <option value="">Todos</option>
+            </select>
+          </div>
+        </div>
+        <div class="filter-group">
+          <label for="filterModalidade">Modalidade</label>
+          <div class="custom-select-wrap">
+            <select id="filterModalidade" class="filter-native-select">
+              <option value="">Todas</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- KPI Cards Row (4 Cards) -->
+      <section class="kpi-grid">
+        <!-- KPI 1: Satisfação média -->
+        <div class="card kpi-card">
+          <div class="kpi-header">
+            <div class="kpi-icon-wrap bg-blue-light">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="#3b82f6">
+                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+              </svg>
+            </div>
+            <div class="kpi-info-title">
+              <span class="kpi-title">Satisfação média</span>
+            </div>
+          </div>
+          <div class="kpi-body flex-baseline-container">
+            <div class="kpi-val-row">
+              <span class="kpi-value text-slate-800" id="kpiSatisfactionValue">8,7</span>
+              <span class="kpi-denom">/ 10</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 2: Índice de Qualidade -->
+        <div class="card kpi-card">
+          <div class="kpi-header">
+            <div class="kpi-icon-wrap bg-purple-light">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="#7c3aed">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+              </svg>
+            </div>
+            <div class="kpi-info-title">
+              <span class="kpi-title">Índice de Qualidade</span>
+            </div>
+          </div>
+          <div class="kpi-body flex-baseline-container">
+            <div class="kpi-val-row">
+              <span class="kpi-value text-slate-800" id="kpiQualityValue">91%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 3: Serviços com problema -->
+        <div class="card kpi-card">
+          <div class="kpi-header">
+            <div class="kpi-icon-wrap bg-orange-light">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="#f97316">
+                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+              </svg>
+            </div>
+            <div class="kpi-info-title">
+              <span class="kpi-title">Serviços com problema</span>
+            </div>
+          </div>
+          <div class="kpi-body flex-baseline-container">
+            <div class="kpi-val-row">
+              <span class="kpi-value text-slate-800" id="kpiProblemsValue">6,4%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 4: Auditorias realizadas -->
+        <div class="card kpi-card">
+          <div class="kpi-header">
+            <div class="kpi-icon-wrap bg-cyan-light">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="#0891b2">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+              </svg>
+            </div>
+            <div class="kpi-info-title">
+              <span class="kpi-title">Auditorias realizadas</span>
+            </div>
+          </div>
+          <div class="kpi-body flex-baseline-container">
+            <div class="kpi-val-row">
+              <span class="kpi-value text-slate-800" id="kpiAuditsValue">1.284</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Middle Section: NPS Pie Chart & Qualidade por etapa do serviço (2 Columns) -->
+      <section class="charts-row-split">
+        <!-- Gráfico de NPS Ampliado com Pizza -->
+        <div class="card chart-card">
+          <div class="chart-header">
+            <div>
+              <h2 class="section-title">Distribuição do NPS</h2>
+              <p class="section-subtitle">Promotores, Neutros e Detratores.</p>
+            </div>
+          </div>
+
+          <div class="nps-chart-content">
+            <div class="nps-pie-wrapper">
+              <canvas id="npsPieChart" width="170" height="170"></canvas>
+              <div class="nps-pie-center">
+                <span class="nps-center-val" id="kpiNpsValue">72</span>
+                <span class="nps-center-sub">NPS Score</span>
+              </div>
+            </div>
+
+            <div class="nps-legend-details">
+              <div class="nps-legend-row">
+                <div class="nps-legend-left">
+                  <span class="dot dot-green"></span>
+                  <span>Promotores</span>
+                </div>
+                <div class="nps-legend-right">
+                  <span class="nps-pct-bold" id="npsPctPromoters">78%</span>
+                  <span class="nps-count-sub" id="npsCountPromoters">(0)</span>
+                </div>
+              </div>
+
+              <div class="nps-legend-row">
+                <div class="nps-legend-left">
+                  <span class="dot dot-yellow"></span>
+                  <span>Neutros</span>
+                </div>
+                <div class="nps-legend-right">
+                  <span class="nps-pct-bold" id="npsPctNeutrals">14%</span>
+                  <span class="nps-count-sub" id="npsCountNeutrals">(0)</span>
+                </div>
+              </div>
+
+              <div class="nps-legend-row">
+                <div class="nps-legend-left">
+                  <span class="dot dot-red"></span>
+                  <span>Detratores</span>
+                </div>
+                <div class="nps-legend-right">
+                  <span class="nps-pct-bold" id="npsPctDetractors">8%</span>
+                  <span class="nps-count-sub" id="npsCountDetractors">(0)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Qualidade por etapa do serviço (Horizontal Bars) -->
+        <div class="card chart-card">
+          <div class="chart-header">
+            <div>
+              <h2 class="section-title">Qualidade por etapa do serviço</h2>
+              <p class="section-subtitle">Percentual de respostas positivas em cada etapa.</p>
+            </div>
+          </div>
+
+          <div class="bars-container">
+            <div class="bar-step-item">
+              <div class="bar-step-label">Escopo completo</div>
+              <div class="bar-step-track">
+                <div class="bar-step-fill" id="barStepFillQ2" style="width: 94%; background-color: #2563eb;"></div>
+              </div>
+              <div class="bar-step-val" id="barStepValQ2">94%</div>
+            </div>
+
+            <div class="bar-step-item">
+              <div class="bar-step-label">Funcionamento adequado</div>
+              <div class="bar-step-track">
+                <div class="bar-step-fill" id="barStepFillQ3" style="width: 88%; background-color: #65a30d;"></div>
+              </div>
+              <div class="bar-step-val" id="barStepValQ3">88%</div>
+            </div>
+
+            <div class="bar-step-item">
+              <div class="bar-step-label">Organização / Postura</div>
+              <div class="bar-step-track">
+                <div class="bar-step-fill" id="barStepFillQ4" style="width: 96%; background-color: #7c3aed;"></div>
+              </div>
+              <div class="bar-step-val" id="barStepValQ4">96%</div>
+            </div>
+
+            <div class="bar-step-item">
+              <div class="bar-step-label">Orientação sobre pendências</div>
+              <div class="bar-step-track">
+                <div class="bar-step-fill" id="barStepFillQ5" style="width: 85%; background-color: #f97316;"></div>
+              </div>
+              <div class="bar-step-val" id="barStepValQ5">85%</div>
+            </div>
+
+            <div class="bar-step-item">
+              <div class="bar-step-label">Serviço sem problema</div>
+              <div class="bar-step-track">
+                <div class="bar-step-fill" id="barStepFillQ6" style="width: 93%; background-color: #06b6d4;"></div>
+              </div>
+              <div class="bar-step-val" id="barStepValQ6">93%</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Section: Evolução da Qualidade (Full Width) -->
+      <section class="charts-row-full">
+        <div class="card chart-card">
+          <div class="chart-header">
+            <div>
+              <h2 class="section-title">Evolução da qualidade</h2>
+              <p class="section-subtitle">Acompanhe a evolução dos principais indicadores ao longo do tempo.</p>
+            </div>
+            <div class="chart-year-filter-wrap">
+              <select id="chartYearSelect" class="chart-year-select" title="Filtrar por ano">
+                <option value="">Todos os anos</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="chart-wrapper">
+            <canvas id="qualityEvolutionChart" height="200"></canvas>
+          </div>
+
+          <div class="chart-bottom-legend">
+            <div class="legend-indicator">
+              <span class="chart-bullet bullet-blue"></span>
+              <span>Índice de Qualidade</span>
+            </div>
+            <div class="legend-indicator">
+              <span class="chart-bullet bullet-green"></span>
+              <span>Satisfação média</span>
+            </div>
+            <div class="legend-indicator">
+              <span class="chart-bullet bullet-orange"></span>
+              <span>% Problemas</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
