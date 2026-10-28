@@ -1149,18 +1149,188 @@ body {
   line-height: 1.35;
 }
 
-/* Responsive adjustments */
-@media (max-width: 1200px) {
-  .kpi-grid {
-    grid-template-columns: repeat(3, 1fr);
+/* Responsive adjustments for mobile devices without affecting desktop web */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 12px 14px 24px;
   }
-  .charts-row {
-    grid-template-columns: 1fr;
+
+  /* Header on Mobile: stack upload and date picker cleanly */
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 14px;
   }
-  .tables-row {
-    grid-template-columns: 1fr;
+
+  .header-file-upload {
+    width: 100%;
+    display: flex;
   }
-  .insights-grid {
+
+  .file-select-box {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .file-select-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+
+  .file-select-sub {
+    display: none;
+  }
+
+  .date-badge-wrapper {
+    width: 100%;
+  }
+
+  .date-badge {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .calendar-popover {
+    right: auto;
+    left: 0;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  /* Filters row on Mobile: 2 columns grid for comfortable thumb tapping */
+  .filters-row {
     grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .filter-native-select {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    font-size: 13px;
+  }
+
+  /* KPI cards: 2x2 grid on mobile */
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .kpi-card {
+    min-height: 110px;
+    padding: 12px;
+  }
+
+  .kpi-title {
+    font-size: 11px;
+  }
+
+  .kpi-value {
+    font-size: 20px;
+  }
+
+  /* Middle Split Charts on Mobile: stack in 1 column */
+  .charts-row-split {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  /* NPS Donut section on Mobile: vertical center layout for comfortable readability */
+  .nps-chart-content {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 0;
+  }
+
+  .nps-pie-wrapper {
+    width: 150px;
+    height: 150px;
+  }
+
+  .nps-legend-details {
+    width: 100%;
+    max-width: 260px;
+  }
+
+  .nps-legend-row {
+    padding: 7px 12px;
+  }
+
+  /* Horizontal bars for Service Stages on Mobile */
+  .bar-step-label {
+    font-size: 11px;
+  }
+
+  .bar-step-track {
+    height: 18px;
+  }
+
+  .bar-step-val {
+    font-size: 11.5px;
+    min-width: 32px;
+  }
+
+  /* Bottom Line Chart (Evolução da qualidade) on Mobile */
+  .charts-row-full {
+    margin-bottom: 16px;
+  }
+
+  .chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .chart-year-filter-wrap {
+    width: 100%;
+  }
+
+  .chart-year-select {
+    width: 100%;
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
+  .chart-wrapper {
+    min-height: 220px;
+  }
+
+  .chart-bottom-legend {
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small mobile phones */
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .kpi-value {
+    font-size: 18px;
+  }
+
+  .kpi-icon-wrap {
+    width: 32px;
+    height: 32px;
+  }
+
+  .kpi-icon-wrap svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .filters-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 }
