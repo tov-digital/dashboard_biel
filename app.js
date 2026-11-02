@@ -1494,18 +1494,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const rankingBadgeSummary = document.getElementById('rankingBadgeSummary');
 
     if (rankingTableBody) {
-      const analystList = Object.values(analystsStats).map(a => {
-        let notaFinal = 0;
-        let hasAuditorias = a.totalAuditorias > 0;
-        if (hasAuditorias) {
-          notaFinal = ((a.elogios - a.reclamacoes) / a.totalAuditorias) * 100;
-        }
-        return {
-          ...a,
-          notaFinal,
-          hasAuditorias
-        };
-      });
+      const analystList = Object.values(analystsStats)
+        .map(a => {
+          let notaFinal = 0;
+          let hasAuditorias = a.totalAuditorias > 0;
+          if (hasAuditorias) {
+            notaFinal = ((a.elogios - a.reclamacoes) / a.totalAuditorias) * 100;
+          }
+          return {
+            ...a,
+            notaFinal,
+            hasAuditorias
+          };
+        })
+        .filter(a => a.notaFinal !== 0);
 
       // Ordenar da maior para a menor nota final.
       // Em caso de empate na nota, prioriza quem teve mais auditorias totais ou mais elogios
