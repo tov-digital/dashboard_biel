@@ -16,135 +16,206 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="app-container">
+  <!-- Overlay para fechar sidebar em mobile ou ao clicar fora -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- App Shell com Sidebar Recolhível + Conteúdo Principal -->
+  <div class="app-layout">
+    <!-- Sidebar Recolhível à Esquerda -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" class="sidebar-brand-icon">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+          <span class="sidebar-brand-title">Controles & Filtros</span>
+        </div>
+        <button type="button" class="sidebar-toggle-btn" id="sidebarCloseBtn" title="Recolher menu">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <div class="sidebar-scrollable-content">
+        <!-- Bloco 1: Upload de Planilha -->
+        <div class="sidebar-section">
+          <span class="sidebar-section-title">Base de Dados</span>
+          
+          <div class="sidebar-file-upload">
+            <input type="file" id="fileInput" accept=".csv, .xls, .xlsx" class="file-input-hidden" />
+            
+            <div class="file-select-box" id="uploadDropzone" title="Clique para selecionar arquivo .csv, .xls ou .xlsx">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" class="upload-icon-sm">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <div class="file-select-info">
+                <span class="file-select-name" id="fileSelectName">Inserir planilha</span>
+                <span class="file-select-sub" id="fileSelectSub">Arraste ou clique para selecionar (.csv, .xls)</span>
+              </div>
+            </div>
+
+            <button type="button" class="btn-confirm-file" id="btnConfirmFile" title="Confirmar e carregar dados">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Carregar Arquivo</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Bloco 2: Filtro de Período de Data -->
+        <div class="sidebar-section">
+          <span class="sidebar-section-title">Período de Contato</span>
+          <div class="date-badge-wrapper sidebar-date-wrapper">
+            <div class="date-badge" id="dateBadgeBtn" title="Filtrar por período de contato">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <div class="date-badge-text">
+                <span class="date-badge-title">PERÍODO</span>
+                <span class="date-range" id="headerDateRange">Todas as datas <span class="arrow-down" id="dateBadgeChevron">&#9662;</span></span>
+              </div>
+            </div>
+
+            <!-- Date Picker Popover Panel -->
+            <div class="calendar-popover" id="calendarPopover">
+              <div class="cal-nav-row">
+                <button type="button" class="cal-nav-btn" id="calPrevMonth" title="Mês anterior">&lsaquo;</button>
+                <div class="cal-title-selects">
+                  <span class="cal-month-name" id="calMonthDisplay">Outubro</span>
+                  <span class="cal-year-name" id="calYearDisplay">2026</span>
+                </div>
+                <button type="button" class="cal-nav-btn" id="calNextMonth" title="Próximo mês">&rsaquo;</button>
+              </div>
+
+              <!-- Days of Week Header (Seg - Dom) -->
+              <div class="cal-weekdays">
+                <span>Seg</span>
+                <span>Ter</span>
+                <span>Qua</span>
+                <span>Qui</span>
+                <span>Sex</span>
+                <span>Sáb</span>
+                <span>Dom</span>
+              </div>
+
+              <!-- Grid of calendar days -->
+              <div class="cal-days-grid" id="calDaysGrid"></div>
+
+              <!-- Quick Selection Preset Buttons -->
+              <div class="cal-footer-presets">
+                <button type="button" class="cal-preset-btn" id="presetThisMonth">Este Mês</button>
+                <button type="button" class="cal-preset-btn" id="presetThisYear">Este Ano</button>
+                <button type="button" class="cal-preset-btn" id="presetAllTime">Sempre</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloco 3: Filtros de Seleção -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-header">
+            <span class="sidebar-section-title">Filtros</span>
+            <button type="button" class="sidebar-clear-filters-btn" id="btnClearFilters" title="Limpar todos os filtros">
+              Limpar
+            </button>
+          </div>
+
+          <div class="sidebar-filters-stack">
+            <div class="filter-group">
+              <label for="filterLoja">Loja</label>
+              <div class="custom-select-wrap">
+                <select id="filterLoja" class="filter-native-select">
+                  <option value="">Todas</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <label for="filterUF">UF</label>
+              <div class="custom-select-wrap">
+                <select id="filterUF" class="filter-native-select">
+                  <option value="">Todas</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <label for="filterRegional">Regional</label>
+              <div class="custom-select-wrap">
+                <select id="filterRegional" class="filter-native-select">
+                  <option value="">Todas</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <label for="filterAnalista">Analista</label>
+              <div class="custom-select-wrap">
+                <select id="filterAnalista" class="filter-native-select">
+                  <option value="">Todos</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <label for="filterFornecedor">Fornecedor</label>
+              <div class="custom-select-wrap">
+                <select id="filterFornecedor" class="filter-native-select">
+                  <option value="">Todos</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <label for="filterModalidade">Modalidade</label>
+              <div class="custom-select-wrap">
+                <select id="filterModalidade" class="filter-native-select">
+                  <option value="">Todas</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
     <!-- Main Content Area -->
     <main class="main-content">
-      <!-- Header -->
-      <header class="header">
-        <!-- Left: File Upload & Confirm Button -->
-        <div class="header-file-upload">
-          <input type="file" id="fileInput" accept=".csv, .xls, .xlsx" class="file-input-hidden" />
-          
-          <div class="file-select-box" id="uploadDropzone" title="Clique para selecionar arquivo .csv, .xls ou .xlsx">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" class="upload-icon-sm">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="17 8 12 3 7 8"/>
-              <line x1="12" y1="3" x2="12" y2="15"/>
+      <!-- Top Action Bar (com botão de abrir menu lateral e status) -->
+      <header class="top-nav-bar">
+        <div class="top-nav-left">
+          <button type="button" class="btn-open-sidebar" id="sidebarOpenBtn" title="Abrir menu de filtros e planilha">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
-            <div class="file-select-info">
-              <span class="file-select-name" id="fileSelectName">Inserir planilha (.csv, .xls)</span>
-              <span class="file-select-sub" id="fileSelectSub">Arraste ou clique para selecionar</span>
-            </div>
-          </div>
-
-          <button type="button" class="btn-confirm-file btn-confirm-icon-only" id="btnConfirmFile" title="Confirmar e carregar dados">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
+            <span class="btn-open-sidebar-text">Filtros & Planilha</span>
           </button>
+          <div class="top-active-filters" id="topActiveFiltersBadges">
+            <!-- Badges de filtros ativos inseridas dinamicamente -->
+          </div>
         </div>
 
-        <!-- Right: Date Badge & Dropdown Calendar -->
-        <div class="date-badge-wrapper">
-          <div class="date-badge" id="dateBadgeBtn" title="Filtrar por período de contato">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-            <div class="date-badge-text">
-              <span class="date-badge-title">PERÍODO</span>
-              <span class="date-range" id="headerDateRange">01/10/2026 até 31/10/2026 <span class="arrow-down" id="dateBadgeChevron">&#9662;</span></span>
-            </div>
-          </div>
-
-          <!-- Date Picker Popover Panel -->
-          <div class="calendar-popover" id="calendarPopover">
-            <div class="cal-nav-row">
-              <button type="button" class="cal-nav-btn" id="calPrevMonth" title="Mês anterior">&lsaquo;</button>
-              <div class="cal-title-selects">
-                <span class="cal-month-name" id="calMonthDisplay">Outubro</span>
-                <span class="cal-year-name" id="calYearDisplay">2026</span>
-              </div>
-              <button type="button" class="cal-nav-btn" id="calNextMonth" title="Próximo mês">&rsaquo;</button>
-            </div>
-
-            <!-- Days of Week Header (Seg - Dom) -->
-            <div class="cal-weekdays">
-              <span>Seg</span>
-              <span>Ter</span>
-              <span>Qua</span>
-              <span>Qui</span>
-              <span>Sex</span>
-              <span>Sáb</span>
-              <span>Dom</span>
-            </div>
-
-            <!-- Grid of calendar days -->
-            <div class="cal-days-grid" id="calDaysGrid"></div>
-
-            <!-- Quick Selection Preset Buttons -->
-            <div class="cal-footer-presets">
-              <button type="button" class="cal-preset-btn" id="presetThisMonth">Este Mês</button>
-              <button type="button" class="cal-preset-btn" id="presetThisYear">Este Ano</button>
-              <button type="button" class="cal-preset-btn" id="presetAllTime">Sempre</button>
-            </div>
-          </div>
+        <div class="top-nav-right">
+          <span class="top-data-status" id="topDataStatus">Nenhum filtro aplicado</span>
         </div>
       </header>
-
-      <!-- Filter Bar -->
-      <section class="filters-row">
-        <div class="filter-group">
-          <label for="filterLoja">Loja</label>
-          <div class="custom-select-wrap">
-            <select id="filterLoja" class="filter-native-select">
-              <option value="">Todas</option>
-            </select>
-          </div>
-        </div>
-        <div class="filter-group">
-          <label for="filterUF">UF</label>
-          <div class="custom-select-wrap">
-            <select id="filterUF" class="filter-native-select">
-              <option value="">Todas</option>
-            </select>
-          </div>
-        </div>
-        <div class="filter-group">
-          <label for="filterRegional">Regional</label>
-          <div class="custom-select-wrap">
-            <select id="filterRegional" class="filter-native-select">
-              <option value="">Todas</option>
-            </select>
-          </div>
-        </div>
-        <div class="filter-group">
-          <label for="filterAnalista">Analista</label>
-          <div class="custom-select-wrap">
-            <select id="filterAnalista" class="filter-native-select">
-              <option value="">Todos</option>
-            </select>
-          </div>
-        </div>
-        <div class="filter-group">
-          <label for="filterFornecedor">Fornecedor</label>
-          <div class="custom-select-wrap">
-            <select id="filterFornecedor" class="filter-native-select">
-              <option value="">Todos</option>
-            </select>
-          </div>
-        </div>
-        <div class="filter-group">
-          <label for="filterModalidade">Modalidade</label>
-          <div class="custom-select-wrap">
-            <select id="filterModalidade" class="filter-native-select">
-              <option value="">Todas</option>
-            </select>
-          </div>
-        </div>
-      </section>
 
       <!-- KPI Cards Row (4 Cards) -->
       <section class="kpi-grid">
@@ -368,6 +439,108 @@
               <span class="chart-bullet bullet-orange"></span>
               <span>% Problemas</span>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Nova Seção: Relacionamento com o Analista & Comunicação Prévia -->
+      <section class="charts-row-split analyst-section">
+        <!-- Coluna Esquerda: Dois Indicadores Empilhados -->
+        <div class="analyst-kpis-stacked">
+          <!-- Indicador 1: Q7 Conhece o(a) Analista? -->
+          <div class="card kpi-stacked-card">
+            <div class="kpi-stacked-header">
+              <div class="kpi-icon-wrap bg-purple-light">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="#7c3aed">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </div>
+              <div class="kpi-stacked-info">
+                <span class="kpi-title">Conhece o(a) Analista?</span>
+                <span class="kpi-stacked-sub">Respostas afirmativas (Sim)</span>
+              </div>
+            </div>
+            <div class="kpi-stacked-body">
+              <div class="kpi-stacked-val-row">
+                <span class="kpi-value" id="kpiQ7Value">-</span>
+                <span class="kpi-stacked-count" id="kpiQ7Count">(0 / 0)</span>
+              </div>
+              <div class="kpi-stacked-progress">
+                <div class="kpi-stacked-bar" id="kpiQ7Bar" style="width: 0%; background-color: #7c3aed;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Indicador 2: Q09 Recebeu e-mail prévio? -->
+          <div class="card kpi-stacked-card">
+            <div class="kpi-stacked-header">
+              <div class="kpi-icon-wrap bg-blue-light">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="#2563eb">
+                  <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+              </div>
+              <div class="kpi-stacked-info">
+                <span class="kpi-title">Recebeu e-mail prévio?</span>
+                <span class="kpi-stacked-sub">Respostas afirmativas (Sim)</span>
+              </div>
+            </div>
+            <div class="kpi-stacked-body">
+              <div class="kpi-stacked-val-row">
+                <span class="kpi-value" id="kpiQ9Value">-</span>
+                <span class="kpi-stacked-count" id="kpiQ9Count">(0 / 0)</span>
+              </div>
+              <div class="kpi-stacked-progress">
+                <div class="kpi-stacked-bar" id="kpiQ9Bar" style="width: 0%; background-color: #2563eb;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coluna Direita: Gráfico de Barras Q8 Situações de Acionamento -->
+        <div class="card chart-card analyst-chart-card">
+          <div class="chart-header">
+            <div>
+              <h2 class="section-title">Situações de acionamento do(a) Analista</h2>
+              <p class="section-subtitle">Distribuição das situações em que o analista costuma ser acionado (Q8).</p>
+            </div>
+          </div>
+
+          <div class="analyst-bar-chart-wrapper">
+            <canvas id="analystSituationsChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Seção: Ranking de Analistas -->
+      <section class="charts-row-full ranking-section">
+        <div class="card ranking-card">
+          <div class="ranking-header">
+            <div>
+              <h2 class="section-title">Ranking de Analistas</h2>
+              <p class="section-subtitle">Classificação por nota final baseada nas auditorias realizadas ((Elogios - Reclamações) / Total de Auditorias).</p>
+            </div>
+            <div class="ranking-badge-summary" id="rankingBadgeSummary">
+              0 analistas
+            </div>
+          </div>
+
+          <div class="ranking-table-container">
+            <table class="ranking-table">
+              <thead>
+                <tr>
+                  <th class="th-pos">#</th>
+                  <th class="th-analista">Analista</th>
+                  <th class="th-num">Auditorias</th>
+                  <th class="th-num">Elogios</th>
+                  <th class="th-num">Reclamações</th>
+                  <th class="th-num">Sugestões</th>
+                  <th class="th-score">Nota Final</th>
+                </tr>
+              </thead>
+              <tbody id="rankingTableBody">
+                <!-- Linhas preenchidas dinamicamente via app.js -->
+              </tbody>
+            </table>
           </div>
         </div>
       </section>

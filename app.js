@@ -3,6 +3,111 @@ document.addEventListener('DOMContentLoaded', () => {
   const npsPieCanvas = document.getElementById('npsPieChart');
   let npsPieChart = null;
 
+  const analystSituationsCanvas = document.getElementById('analystSituationsChart');
+  let analystSituationsChart = null;
+
+  // Plugin to render percentage values on top of vertical bars
+  const barTopValuesPlugin = {
+    id: 'barTopValuesPlugin',
+    afterDatasetsDraw(chart) {
+      if (chart.canvas.id !== 'analystSituationsChart') return;
+      const { ctx } = chart;
+      chart.data.datasets.forEach((dataset, i) => {
+        const meta = chart.getDatasetMeta(i);
+        meta.data.forEach((bar, index) => {
+          const val = dataset.data[index];
+          if (val === null || val === undefined || isNaN(val)) return;
+          const text = Number(val).toFixed(1).replace('.', ',') + '%';
+
+          ctx.save();
+          ctx.font = '600 11px Inter, sans-serif';
+          ctx.fillStyle = '#1e293b';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          // Draw slightly above the top of the bar
+          ctx.fillText(text, bar.x, bar.y - 4);
+          ctx.restore();
+        });
+      });
+    }
+  };
+
+  if (analystSituationsCanvas) {
+    const aCtx = analystSituationsCanvas.getContext('2d');
+    analystSituationsChart = new Chart(aCtx, {
+      type: 'bar',
+      plugins: [barTopValuesPlugin],
+      data: {
+        labels: [],
+        datasets: [{
+          label: '% de respostas',
+          data: [],
+          backgroundColor: '#3b82f6',
+          borderRadius: 6,
+          barPercentage: 0.55,
+          categoryPercentage: 0.75
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+          padding: { top: 22, bottom: 6, left: 10, right: 10 }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0f172a',
+            titleFont: { family: 'Inter', size: 11 },
+            bodyFont: { family: 'Inter', size: 11 },
+            padding: 8,
+            cornerRadius: 6,
+            callbacks: {
+              label: function(context) {
+                const count = context.raw || 0;
+                return ` ${Number(count).toFixed(1).replace('.', ',')}% das respostas`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: { family: 'Inter', size: 11, weight: '500' },
+              color: '#334155',
+              maxRotation: 0,
+              minRotation: 0,
+              autoSkip: false,
+              callback: function(val) {
+                const label = this.getLabelForValue(val);
+                // Wrap long labels into multiple lines if needed for clean display
+                if (typeof label === 'string' && label.length > 14) {
+                  const words = label.split(' ');
+                  if (words.length > 1) {
+                    const mid = Math.ceil(words.length / 2);
+                    return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
+                  }
+                }
+                return label;
+              }
+            }
+          },
+          y: {
+            beginAtZero: true,
+            suggestedMax: 50,
+            grid: { color: '#f1f5f9' },
+            ticks: {
+              font: { family: 'Inter', size: 10 },
+              color: '#64748b',
+              callback: function(val) { return val + '%'; }
+            }
+          }
+        }
+      }
+    });
+  }
+
   if (npsPieCanvas) {
     const npsCtx = npsPieCanvas.getContext('2d');
     npsPieChart = new Chart(npsCtx, {
@@ -299,6 +404,62 @@ document.addEventListener('DOMContentLoaded', () => {
         fileSelectSub.textContent = 'Clique no botão ao lado para processar os dados';
       }
     }
+  }
+
+  // Sidebar elements
+  const sidebar = document.getElementById('sidebar');
+  const sidebarOpenBtn = document.getElementById('sidebarOpenBtn');
+  const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const btnClearFilters = document.getElementById('btnClearFilters');
+  const topActiveFiltersBadges = document.getElementById('topActiveFiltersBadges');
+  const topDataStatus = document.getElementById('topDataStatus');
+
+  function openSidebar() {
+    if (sidebar) sidebar.classList.remove('collapsed');
+    if (sidebarOverlay && window.innerWidth <= 768) {
+      sidebarOverlay.classList.add('active');
+    }
+  }
+
+  function closeSidebar() {
+    if (sidebar) sidebar.classList.add('collapsed');
+    if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+  }
+
+  function toggleSidebar() {
+    if (sidebar && sidebar.classList.contains('collapsed')) {
+      openSidebar();
+    } else {
+      closeSidebar();
+    }
+  }
+
+  if (sidebarOpenBtn) sidebarOpenBtn.addEventListener('click', toggleSidebar);
+  if (sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', closeSidebar);
+  if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
+
+  // Iniciar sidebar aberta no desktop, fechada no mobile
+  if (window.innerWidth <= 768 && sidebar) {
+    sidebar.classList.add('collapsed');
+  }
+
+  // Clear all filters button
+  if (btnClearFilters) {
+    btnClearFilters.addEventListener('click', () => {
+      // Reset dropdowns
+      for (const key of filterKeys) {
+        if (filterSelects[key]) filterSelects[key].value = '';
+      }
+      // Reset date
+      dateRangeFilter = { start: null, end: null };
+      tempClickState = null;
+      updateDateBadgeDisplay();
+      renderCalendarDays();
+
+      updateFilterOptions();
+      applyFiltersAndUpdateMetrics();
+    });
   }
 
   // --- Dynamic Spreadsheet Parser & KPI Calculation Engine ---
@@ -990,6 +1151,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let countProblemsSim = 0;
 
+    // Q7, Q9 (Indicadores) e Q8 (Situações de acionamento)
+    let q7Sim = 0;
+    let q7Respondidos = 0;
+
+    let q9Sim = 0;
+    let q9Respondidos = 0;
+
+    const q8Counts = {};
+    let q8TotalRespondidos = 0;
+
+    // Estatísticas para Ranking de Analistas
+    const analystsStats = {};
+
     const stageScores = {
       q2: { sum: 0, count: 0 },
       q3: { sum: 0, count: 0 },
@@ -1095,6 +1269,63 @@ document.addEventListener('DOMContentLoaded', () => {
         stageScores.q6.sum += pSemProb;
         stageScores.q6.count++;
       }
+
+      // Q7 Conhece o(a) Analista?
+      const q7Val = String(getVal(row, 'Q7 Conhece o(a) Analista?') || getVal(row, 'Q7') || '').trim();
+      if (q7Val) {
+        q7Respondidos++;
+        if (q7Val.toLowerCase() === 'sim') {
+          q7Sim++;
+        }
+      }
+
+      // Q09 Recebeu e-mail prévio?
+      const q9Val = String(getVal(row, 'Q09 Recebeu e-mail prévio?') || getVal(row, 'Q09') || getVal(row, 'Q9') || '').trim();
+      if (q9Val) {
+        q9Respondidos++;
+        if (q9Val.toLowerCase() === 'sim') {
+          q9Sim++;
+        }
+      }
+
+      // Q8 Caso sim, em quais situações costuma acioná-lo(a)?
+      const q8Val = String(getVal(row, 'Q8 Caso sim, em quais situações costuma acioná-lo(a)?') || getVal(row, 'Q8') || '').trim();
+      if (q8Val && q8Val !== '-' && q8Val.toLowerCase() !== 'null') {
+        q8TotalRespondidos++;
+        q8Counts[q8Val] = (q8Counts[q8Val] || 0) + 1;
+      }
+
+      // Ranking de Analistas: 'Comentário sobre o analista (tipo)'
+      const analistaName = String(getVal(row, 'Analista') || '').trim();
+      if (analistaName && analistaName !== '#REF!' && analistaName !== '-' && analistaName.toLowerCase() !== 'null') {
+        if (!analystsStats[analistaName]) {
+          analystsStats[analistaName] = {
+            name: analistaName,
+            totalAuditorias: 0,
+            totalAvaliacoes: 0,
+            elogios: 0,
+            reclamacoes: 0,
+            sugestoes: 0
+          };
+        }
+
+        // Incrementa o total de auditorias do analista
+        analystsStats[analistaName].totalAuditorias++;
+
+        const tipoComentario = String(getVal(row, 'Comentário sobre o analista (tipo)') || getVal(row, 'Comentário sobre o analista') || '').trim().toLowerCase();
+        if (tipoComentario) {
+          if (tipoComentario.includes('elogio')) {
+            analystsStats[analistaName].elogios++;
+            analystsStats[analistaName].totalAvaliacoes++;
+          } else if (tipoComentario.includes('reclama')) {
+            analystsStats[analistaName].reclamacoes++;
+            analystsStats[analistaName].totalAvaliacoes++;
+          } else if (tipoComentario.includes('sugest')) {
+            analystsStats[analistaName].sugestoes++;
+            analystsStats[analistaName].totalAvaliacoes++;
+          }
+        }
+      }
     });
 
     // 1. NPS
@@ -1193,13 +1424,262 @@ document.addEventListener('DOMContentLoaded', () => {
     updateBar('barStepFillQ3', 'barStepValQ3', stageScores.q3);
     updateBar('barStepFillQ4', 'barStepValQ4', stageScores.q4);
     updateBar('barStepFillQ5', 'barStepValQ5', stageScores.q5);
-    updateBar('barStepFillQ6', 'barStepValQ6', stageScores.q6);
 
-    // Visual feedback in file subtext
+    // Serviço sem problema: complementar a 'Serviços com problema' (ex: se 0,9% tem problema, 99,1% está sem problema)
+    const barFillQ6 = document.getElementById('barStepFillQ6');
+    const barValQ6 = document.getElementById('barStepValQ6');
+    if (barFillQ6 && barValQ6) {
+      if (totalAuditorias > 0) {
+        const pctSemProblema = Math.max(0, Math.min(100, 100 - pctProblemas));
+        const pctFormatted = pctSemProblema % 1 !== 0 
+          ? pctSemProblema.toFixed(1).replace('.', ',') + '%' 
+          : Math.round(pctSemProblema) + '%';
+        barFillQ6.style.width = pctSemProblema.toFixed(1) + '%';
+        barValQ6.textContent = pctFormatted;
+      } else if (stageScores.q6.count > 0) {
+        const avg = Math.round(stageScores.q6.sum / stageScores.q6.count);
+        barFillQ6.style.width = avg + '%';
+        barValQ6.textContent = avg + '%';
+      } else {
+        barFillQ6.style.width = '0%';
+        barValQ6.textContent = '-';
+      }
+    }
+
+    // --- Update Stacked KPIs: Q7 (Conhece Analista) & Q9 (Recebeu e-mail) ---
+    const pctQ7 = q7Respondidos > 0 ? ((q7Sim / q7Respondidos) * 100) : 0;
+    const kpiQ7Val = document.getElementById('kpiQ7Value');
+    const kpiQ7Cnt = document.getElementById('kpiQ7Count');
+    const kpiQ7Bar = document.getElementById('kpiQ7Bar');
+    if (kpiQ7Val) kpiQ7Val.textContent = q7Respondidos > 0 ? (pctQ7.toFixed(1).replace('.', ',') + '%') : '-';
+    if (kpiQ7Cnt) kpiQ7Cnt.textContent = `(${q7Sim.toLocaleString('pt-BR')} de ${q7Respondidos.toLocaleString('pt-BR')})`;
+    if (kpiQ7Bar) kpiQ7Bar.style.width = (q7Respondidos > 0 ? pctQ7.toFixed(1) : 0) + '%';
+
+    const pctQ9 = q9Respondidos > 0 ? ((q9Sim / q9Respondidos) * 100) : 0;
+    const kpiQ9Val = document.getElementById('kpiQ9Value');
+    const kpiQ9Cnt = document.getElementById('kpiQ9Count');
+    const kpiQ9Bar = document.getElementById('kpiQ9Bar');
+    if (kpiQ9Val) kpiQ9Val.textContent = q9Respondidos > 0 ? (pctQ9.toFixed(1).replace('.', ',') + '%') : '-';
+    if (kpiQ9Cnt) kpiQ9Cnt.textContent = `(${q9Sim.toLocaleString('pt-BR')} de ${q9Respondidos.toLocaleString('pt-BR')})`;
+    if (kpiQ9Bar) kpiQ9Bar.style.width = (q9Respondidos > 0 ? pctQ9.toFixed(1) : 0) + '%';
+
+    // --- Update Horizontal Bar Chart: Q8 Situações de Acionamento ---
+    if (analystSituationsChart) {
+      if (q8TotalRespondidos > 0) {
+        // Sort situations descending by count
+        const sortedSituations = Object.entries(q8Counts).sort((a, b) => b[1] - a[1]);
+        const labels = sortedSituations.map(item => item[0]);
+        const pcts = sortedSituations.map(item => Number(((item[1] / q8TotalRespondidos) * 100).toFixed(1)));
+
+        // Color palette for the categories
+        const colors = ['#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#cbd5e1'];
+        const barColors = labels.map((_, idx) => colors[idx % colors.length]);
+
+        // Dynamically adjust scale max so the top percentage labels never hit the chart boundary
+        const maxPct = Math.max(...pcts, 0);
+        analystSituationsChart.options.scales.y.suggestedMax = Math.ceil((maxPct + 8) / 10) * 10;
+
+        analystSituationsChart.data.labels = labels;
+        analystSituationsChart.data.datasets[0].data = pcts;
+        analystSituationsChart.data.datasets[0].backgroundColor = barColors;
+      } else {
+        analystSituationsChart.data.labels = [];
+        analystSituationsChart.data.datasets[0].data = [];
+      }
+      analystSituationsChart.update();
+    }
+
+    // --- Update Ranking de Analistas Table ---
+    const rankingTableBody = document.getElementById('rankingTableBody');
+    const rankingBadgeSummary = document.getElementById('rankingBadgeSummary');
+
+    if (rankingTableBody) {
+      const analystList = Object.values(analystsStats).map(a => {
+        let notaFinal = 0;
+        let hasAuditorias = a.totalAuditorias > 0;
+        if (hasAuditorias) {
+          notaFinal = ((a.elogios - a.reclamacoes) / a.totalAuditorias) * 100;
+        }
+        return {
+          ...a,
+          notaFinal,
+          hasAuditorias
+        };
+      });
+
+      // Ordenar da maior para a menor nota final.
+      // Em caso de empate na nota, prioriza quem teve mais auditorias totais ou mais elogios
+      analystList.sort((a, b) => {
+        if (b.notaFinal !== a.notaFinal) {
+          return b.notaFinal - a.notaFinal;
+        }
+        if (b.totalAuditorias !== a.totalAuditorias) {
+          return b.totalAuditorias - a.totalAuditorias;
+        }
+        if (b.elogios !== a.elogios) {
+          return b.elogios - a.elogios;
+        }
+        return a.name.localeCompare(b.name, 'pt-BR');
+      });
+
+      if (rankingBadgeSummary) {
+        rankingBadgeSummary.textContent = `${analystList.length} analista${analystList.length !== 1 ? 's' : ''}`;
+      }
+
+      if (analystList.length === 0) {
+        rankingTableBody.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 24px; color: #94a3b8;">
+              Nenhum analista encontrado para os filtros selecionados.
+            </td>
+          </tr>
+        `;
+      } else {
+        rankingTableBody.innerHTML = analystList.map((item, idx) => {
+          const pos = idx + 1;
+          let badgeClass = '';
+          if (pos === 1) badgeClass = 'gold';
+          else if (pos === 2) badgeClass = 'silver';
+          else if (pos === 3) badgeClass = 'bronze';
+
+          // Iniciais do analista para o avatar
+          const initials = item.name
+            .split(' ')
+            .filter(Boolean)
+            .slice(0, 2)
+            .map(w => w[0])
+            .join('')
+            .toUpperCase() || 'A';
+
+          // Format score
+          const scoreNum = Number(item.notaFinal.toFixed(1));
+          let scoreClass = 'score-neutral';
+          let barBgColor = '#cbd5e1';
+          if (item.hasAuditorias && (item.elogios > 0 || item.reclamacoes > 0)) {
+            if (scoreNum > 0) {
+              scoreClass = 'score-positive';
+              barBgColor = '#16a34a';
+            } else if (scoreNum < 0) {
+              scoreClass = 'score-negative';
+              barBgColor = '#dc2626';
+            }
+          }
+
+          const scoreText = (item.hasAuditorias && (item.elogios > 0 || item.reclamacoes > 0))
+            ? (scoreNum > 0 ? `+${scoreNum.toFixed(1).replace('.', ',')}%` : `${scoreNum.toFixed(1).replace('.', ',')}%`)
+            : '0,0%';
+
+          const barWidth = Math.min(100, Math.abs(scoreNum));
+
+          return `
+            <tr>
+              <td class="td-pos">
+                <span class="ranking-pos-badge ${badgeClass}">${pos}</span>
+              </td>
+              <td>
+                <div class="ranking-analyst-cell">
+                  <div class="ranking-analyst-avatar">${initials}</div>
+                  <span class="ranking-analyst-name">${item.name}</span>
+                </div>
+              </td>
+              <td style="text-align: center;">
+                <span class="ranking-badge-stat badge-total">${item.totalAuditorias}</span>
+              </td>
+              <td style="text-align: center;">
+                <span class="ranking-badge-stat badge-elogio">${item.elogios}</span>
+              </td>
+              <td style="text-align: center;">
+                <span class="ranking-badge-stat badge-reclamacao">${item.reclamacoes}</span>
+              </td>
+              <td style="text-align: center;">
+                <span class="ranking-badge-stat badge-sugestao">${item.sugestoes}</span>
+              </td>
+              <td>
+                <div class="ranking-score-cell">
+                  <div class="ranking-score-bar-bg" title="Magnitude da nota: ${barWidth.toFixed(1)}%">
+                    <div class="ranking-score-bar-fill" style="width: ${barWidth}%; background-color: ${barBgColor};"></div>
+                  </div>
+                  <span class="ranking-score-val ${scoreClass}">${scoreText}</span>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    // Visual feedback in file subtext & top bar
     if (fileSelectSub) {
       fileSelectSub.textContent = `Exibindo ${totalAuditorias.toLocaleString('pt-BR')} auditorias filtradas`;
       fileSelectSub.style.color = '#16a34a';
       fileSelectSub.style.fontWeight = '600';
+    }
+
+    if (topDataStatus) {
+      topDataStatus.textContent = `${totalAuditorias.toLocaleString('pt-BR')} auditorias filtradas`;
+    }
+
+    // Update active filter chips on top navigation bar
+    if (topActiveFiltersBadges) {
+      const activeChips = [];
+
+      // Date range chip
+      if (dateRangeFilter.start && dateRangeFilter.end) {
+        const s = new Date(dateRangeFilter.start);
+        const e = new Date(dateRangeFilter.end);
+        activeChips.push({
+          type: 'date',
+          label: `${formatShortDatePt(s)} - ${formatShortDatePt(e)}`
+        });
+      }
+
+      // Dropdown filter chips
+      const filterReadable = {
+        loja: 'Loja',
+        uf: 'UF',
+        regional: 'Regional',
+        analista: 'Analista',
+        fornecedor: 'Fornecedor',
+        modalidade: 'Modalidade'
+      };
+
+      for (const key of filterKeys) {
+        const sel = filterSelects[key];
+        if (sel && sel.value.trim()) {
+          activeChips.push({
+            type: key,
+            label: `${filterReadable[key]}: ${sel.value.trim()}`
+          });
+        }
+      }
+
+      if (activeChips.length === 0) {
+        topActiveFiltersBadges.innerHTML = '';
+      } else {
+        topActiveFiltersBadges.innerHTML = activeChips.map(c => `
+          <span class="top-filter-chip">
+            <span>${c.label}</span>
+            <button type="button" class="top-filter-chip-remove" data-filter-type="${c.type}" title="Remover este filtro">&times;</button>
+          </span>
+        `).join('');
+
+        // Attach click to remove chip
+        topActiveFiltersBadges.querySelectorAll('.top-filter-chip-remove').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const fType = e.currentTarget.getAttribute('data-filter-type');
+            if (fType === 'date') {
+              dateRangeFilter = { start: null, end: null };
+              tempClickState = null;
+              updateDateBadgeDisplay();
+              renderCalendarDays();
+            } else if (filterSelects[fType]) {
+              filterSelects[fType].value = '';
+            }
+            updateFilterOptions();
+            applyFiltersAndUpdateMetrics();
+          });
+        });
+      }
     }
   }
 });
