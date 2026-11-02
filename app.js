@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
           x: {
             grid: { display: false },
             ticks: {
-              font: { family: 'Inter', size: 11, weight: '500' },
+              font: { family: 'Inter', size: 10, weight: '500' },
               color: '#334155',
               maxRotation: 0,
               minRotation: 0,
@@ -82,11 +82,14 @@ document.addEventListener('DOMContentLoaded', () => {
               callback: function(val) {
                 const label = this.getLabelForValue(val);
                 // Wrap long labels into multiple lines if needed for clean display
-                if (typeof label === 'string' && label.length > 14) {
-                  const words = label.split(' ');
-                  if (words.length > 1) {
-                    const mid = Math.ceil(words.length / 2);
-                    return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
+                if (typeof label === 'string') {
+                  if (label === 'Não Conheço') return 'Não Conheço';
+                  if (label.length > 12) {
+                    const words = label.split(' ');
+                    if (words.length > 1) {
+                      const mid = Math.ceil(words.length / 2);
+                      return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
+                    }
                   }
                 }
                 return label;
@@ -459,6 +462,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       updateFilterOptions();
       applyFiltersAndUpdateMetrics();
+    });
+  }
+
+  // Print Report Engine
+  const btnPrintReport = document.getElementById('btnPrintReport');
+  if (btnPrintReport) {
+    btnPrintReport.addEventListener('click', () => {
+      window.print();
     });
   }
 
@@ -1295,9 +1306,12 @@ document.addEventListener('DOMContentLoaded', () => {
         q8Counts[q8Val] = (q8Counts[q8Val] || 0) + 1;
       }
 
-      // Ranking de Analistas: 'Comentário sobre o analista (tipo)'
+      // Ranking de Analistas: apenas auditorias com Tratativas = "Concluído"
       const analistaName = String(getVal(row, 'Analista') || '').trim();
-      if (analistaName && analistaName !== '#REF!' && analistaName !== '-' && analistaName.toLowerCase() !== 'null') {
+      const tratativaVal = String(getVal(row, 'Tratativas') || getVal(row, 'Tratativa do problema') || '').trim().toLowerCase();
+      const isConcluida = tratativaVal.includes('conclu');
+
+      if (isConcluida && analistaName && analistaName !== '#REF!' && analistaName !== '-' && analistaName.toLowerCase() !== 'null') {
         if (!analystsStats[analistaName]) {
           analystsStats[analistaName] = {
             name: analistaName,
@@ -1309,7 +1323,7 @@ document.addEventListener('DOMContentLoaded', () => {
           };
         }
 
-        // Incrementa o total de auditorias do analista
+        // Incrementa o total de auditorias concluídas do analista
         analystsStats[analistaName].totalAuditorias++;
 
         const tipoComentario = String(getVal(row, 'Comentário sobre o analista (tipo)') || getVal(row, 'Comentário sobre o analista') || '').trim().toLowerCase();
@@ -1610,15 +1624,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Visual feedback in file subtext & top bar
+    // Visual feedback in file subtext
     if (fileSelectSub) {
       fileSelectSub.textContent = `Exibindo ${totalAuditorias.toLocaleString('pt-BR')} auditorias filtradas`;
       fileSelectSub.style.color = '#16a34a';
       fileSelectSub.style.fontWeight = '600';
-    }
-
-    if (topDataStatus) {
-      topDataStatus.textContent = `${totalAuditorias.toLocaleString('pt-BR')} auditorias filtradas`;
     }
 
     // Update active filter chips on top navigation bar

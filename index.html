@@ -13,6 +13,8 @@
   <!-- SheetJS & PapaParse for robust CSV/XLS/XLSX reading -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- html2pdf.js for instant clean PDF generation of the dashboard charts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -213,7 +215,14 @@
         </div>
 
         <div class="top-nav-right">
-          <span class="top-data-status" id="topDataStatus">Nenhum filtro aplicado</span>
+          <button type="button" class="btn-print-report" id="btnPrintReport" title="Imprimir relatório com todos os gráficos e indicadores da tela">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 6 2 18 2 18 9"></polyline>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+              <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            <span>Imprimir</span>
+          </button>
         </div>
       </header>
 
@@ -517,7 +526,7 @@
           <div class="ranking-header">
             <div>
               <h2 class="section-title">Ranking de Analistas</h2>
-              <p class="section-subtitle">Classificação por nota final baseada nas auditorias realizadas ((Elogios - Reclamações) / Total de Auditorias).</p>
+              <p class="section-subtitle">Classificação por nota final baseada nas auditorias concluídas ((Elogios - Reclamações) / Auditorias Concluídas).</p>
             </div>
             <div class="ranking-badge-summary" id="rankingBadgeSummary">
               0 analistas
@@ -530,7 +539,7 @@
                 <tr>
                   <th class="th-pos">#</th>
                   <th class="th-analista">Analista</th>
-                  <th class="th-num">Auditorias</th>
+                  <th class="th-num">Auditorias Concluídas</th>
                   <th class="th-num">Elogios</th>
                   <th class="th-num">Reclamações</th>
                   <th class="th-num">Sugestões</th>
