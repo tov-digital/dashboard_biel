@@ -1059,34 +1059,40 @@ document.addEventListener('DOMContentLoaded', () => {
         countProblemsSim++;
       }
 
-      // Qualidade por etapa do serviço (Q2 Pontos até Q6 Pontos)
-      const q2p = parseNum(getVal(row, 'Q2 Pontos'));
-      if (!isNaN(q2p)) {
-        stageScores.q2.sum += q2p;
+      // Qualidade por etapa do serviço:
+      // Mapeamento resiliente para ambas as versões da planilha:
+      // Nova versão: Q1 Pontos (Escopo), Q2 Pontos (Funcionamento), Q3 Pontos (Organização), Q4 Pontos (Orientação), Q5 Pontos (Problema)
+      // Versão legada: Q2 Pontos (Escopo), Q3 Pontos (Funcionamento), Q4 Pontos (Organização), Q5 Pontos (Orientação), Q6 Pontos (Problema)
+      const hasQ1Pontos = row['Q1 Pontos'] !== undefined || row['q1 pontos'] !== undefined;
+
+      const pEscopo = hasQ1Pontos ? parseNum(getVal(row, 'Q1 Pontos')) : parseNum(getVal(row, 'Q2 Pontos'));
+      if (!isNaN(pEscopo)) {
+        stageScores.q2.sum += pEscopo;
         stageScores.q2.count++;
       }
 
-      const q3p = parseNum(getVal(row, 'Q3 Pontos'));
-      if (!isNaN(q3p)) {
-        stageScores.q3.sum += q3p;
+      const pFunc = hasQ1Pontos ? parseNum(getVal(row, 'Q2 Pontos')) : parseNum(getVal(row, 'Q3 Pontos'));
+      if (!isNaN(pFunc)) {
+        stageScores.q3.sum += pFunc;
         stageScores.q3.count++;
       }
 
-      const q4p = parseNum(getVal(row, 'Q4 Pontos'));
-      if (!isNaN(q4p)) {
-        stageScores.q4.sum += q4p;
+      const pOrg = hasQ1Pontos ? parseNum(getVal(row, 'Q3 Pontos')) : parseNum(getVal(row, 'Q4 Pontos'));
+      if (!isNaN(pOrg)) {
+        stageScores.q4.sum += pOrg;
         stageScores.q4.count++;
       }
 
-      const q5p = parseNum(getVal(row, 'Q5 Pontos'));
-      if (!isNaN(q5p)) {
-        stageScores.q5.sum += q5p;
+      const pOrient = hasQ1Pontos ? parseNum(getVal(row, 'Q4 Pontos')) : parseNum(getVal(row, 'Q5 Pontos'));
+      if (!isNaN(pOrient)) {
+        stageScores.q4_orient = (stageScores.q4_orient || { sum: 0, count: 0 }); // fallback safe
+        stageScores.q5.sum += pOrient;
         stageScores.q5.count++;
       }
 
-      const q6p = parseNum(getVal(row, 'Q6 Pontos'));
-      if (!isNaN(q6p)) {
-        stageScores.q6.sum += q6p;
+      const pSemProb = hasQ1Pontos ? parseNum(getVal(row, 'Q5 Pontos')) : parseNum(getVal(row, 'Q6 Pontos'));
+      if (!isNaN(pSemProb)) {
+        stageScores.q6.sum += pSemProb;
         stageScores.q6.count++;
       }
     });
