@@ -447,6 +447,23 @@ document.addEventListener('DOMContentLoaded', () => {
     sidebar.classList.add('collapsed');
   }
 
+  // State for calculation base of "Serviços com problema" ('preventivas' | 'auditorias')
+  let problemsCalculationBase = 'preventivas';
+
+  const btnToggleProblemsBase = document.getElementById('btnToggleProblemsBase');
+
+  if (btnToggleProblemsBase) {
+    btnToggleProblemsBase.addEventListener('click', () => {
+      problemsCalculationBase = problemsCalculationBase === 'preventivas' ? 'auditorias' : 'preventivas';
+      btnToggleProblemsBase.classList.toggle('active-audits', problemsCalculationBase === 'auditorias');
+      btnToggleProblemsBase.title = problemsCalculationBase === 'preventivas'
+        ? 'Base atual: Preventivas. Clique para calcular com base nas Auditorias realizadas.'
+        : 'Base atual: Auditorias realizadas. Clique para calcular com base nas Preventivas.';
+      
+      applyFiltersAndUpdateMetrics();
+    });
+  }
+
   // Clear all filters button
   if (btnClearFilters) {
     btnClearFilters.addEventListener('click', () => {
@@ -462,6 +479,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       updateFilterOptions();
       applyFiltersAndUpdateMetrics();
+      if (rawSheetRows.length > 0) {
+        calculateQualityEvolutionChart(rawSheetRows);
+      }
     });
   }
 
@@ -961,6 +981,8 @@ document.addEventListener('DOMContentLoaded', () => {
           updateFilterOptions();
           // Update cards and bars
           applyFiltersAndUpdateMetrics();
+          // Update Evolução da qualidade chart with active dropdown filters (ignoring date)
+          calculateQualityEvolutionChart(rawSheetRows);
         }
       });
     }
@@ -1045,11 +1067,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function calculateQualityEvolutionChart(rows) {
     const selectedYear = chartYearSelect ? chartYearSelect.value.trim() : '';
+    const selectedLoja = filterSelects.loja ? filterSelects.loja.value.trim() : '';
+    const selectedUF = filterSelects.uf ? filterSelects.uf.value.trim() : '';
+    const selectedRegional = filterSelects.regional ? filterSelects.regional.value.trim() : '';
+    const selectedAnalista = filterSelects.analista ? filterSelects.analista.value.trim() : '';
+    const selectedFornecedor = filterSelects.fornecedor ? filterSelects.fornecedor.value.trim() : '';
+    const selectedModalidade = filterSelects.modalidade ? filterSelects.modalidade.value.trim() : '';
+
     const monthlyGroups = new Map();
 
     rows.forEach(row => {
       const idAuditoria = String(getVal(row, 'ID Auditoria') || '').trim();
       if (!idAuditoria || idAuditoria === '#REF!' || idAuditoria === '-') return;
+
+      // Apply dropdown filters (Loja, UF, Regional, Analista, Fornecedor, Modalidade)
+      // Exception: "Período de Contato" (dateRangeFilter) is explicitly NOT applied here.
+      if (selectedLoja && String(getVal(row, 'Loja') || '').trim() !== selectedLoja) return;
+      if (selectedUF && String(getVal(row, 'UF') || '').trim() !== selectedUF) return;
+      if (selectedRegional && String(getVal(row, 'Regional') || '').trim() !== selectedRegional) return;
+      if (selectedAnalista && String(getVal(row, 'Analista') || '').trim() !== selectedAnalista) return;
+      if (selectedFornecedor && String(getVal(row, 'Fornecedor') || '').trim() !== selectedFornecedor) return;
+      if (selectedModalidade && String(getVal(row, 'Modalidade') || '').trim() !== selectedModalidade) return;
 
       const dateRaw = getVal(row, 'Data Contato') || getVal(row, 'Data contato') || getVal(row, 'Data Preventiva');
       const dateParsed = parseDateToMonthYear(dateRaw);
@@ -1138,6 +1176,12 @@ document.addEventListener('DOMContentLoaded', () => {
       chart.data.datasets[1].data = newSatisfactionData;
       chart.data.datasets[2].data = newProblemsData;
       chart.update();
+    } else {
+      chart.data.labels = [];
+      chart.data.datasets[0].data = [];
+      chart.data.datasets[1].data = [];
+      chart.data.datasets[2].data = [];
+      chart.update();
     }
   }
 
@@ -1161,6 +1205,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let countQuality = 0;
 
     let countProblemsSim = 0;
+    let countProblemsSimInAudits = 0;
 
     // Q7, Q9 (Indicadores) e Q8 (Situações de acionamento)
     let q7Sim = 0;
@@ -1242,6 +1287,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const q5Val = String(getVal(row, 'Q5 Ficou problema?') || getVal(row, 'Q5') || '').trim().toLowerCase();
       if (q5Val === 'sim') {
         countProblemsSim++;
+        if (hasSat) {
+          countProblemsSimInAudits++;
+        }
       }
 
       // Qualidade por etapa do serviço:
@@ -1363,7 +1411,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const avgQuality = countQuality > 0 ? (sumQuality / countQuality) : 0;
 
     // 4. Serviços com problema
-    const pctProblemas = totalAuditorias > 0 ? ((countProblemsSim / totalAuditorias) * 100) : 0;
+    let pctProblemas = 0;
+    if (problemsCalculationBase === 'auditorias') {
+      pctProblemas = countSatisfaction > 0 ? ((countProblemsSimInAudits / countSatisfaction) * 100) : 0;
+    } else {
+      pctProblemas = totalAuditorias > 0 ? ((countProblemsSim / totalAuditorias) * 100) : 0;
+    }
 
     // --- Update KPI Cards UI ---
     const kpiNpsValue = document.getElementById('kpiNpsValue');
@@ -1422,6 +1475,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const kpiAuditsValue = document.getElementById('kpiAuditsValue');
     if (kpiAuditsValue) {
       kpiAuditsValue.textContent = countSatisfaction.toLocaleString('pt-BR');
+    }
+
+    // Cobertura (% de Auditorias em relação às preventivas)
+    const kpiCoverageValue = document.getElementById('kpiCoverageValue');
+    if (kpiCoverageValue) {
+      if (totalAuditorias > 0) {
+        const coveragePct = (countSatisfaction / totalAuditorias) * 100;
+        kpiCoverageValue.textContent = coveragePct.toFixed(1).replace('.', ',') + '%';
+      } else {
+        kpiCoverageValue.textContent = '-';
+      }
     }
 
     // --- Update Horizontal Bars: Qualidade por etapa do serviço ---
@@ -1696,6 +1760,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             updateFilterOptions();
             applyFiltersAndUpdateMetrics();
+            if (rawSheetRows.length > 0) {
+              calculateQualityEvolutionChart(rawSheetRows);
+            }
           });
         });
       }

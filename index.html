@@ -231,7 +231,7 @@
         <!-- KPI 1: Satisfação média -->
         <div class="card kpi-card">
           <div class="kpi-header">
-            <div class="kpi-icon-wrap bg-blue-light">
+            <div class="kpi-icon-wrap bg-blue-light" data-tooltip="Média das notas de 0 a 10 atribuídas na coluna Q10 Satisfação entre as auditorias avaliadas.">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="#3b82f6">
                 <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
               </svg>
@@ -251,7 +251,7 @@
         <!-- KPI 2: Índice de Qualidade -->
         <div class="card kpi-card">
           <div class="kpi-header">
-            <div class="kpi-icon-wrap bg-purple-light">
+            <div class="kpi-icon-wrap bg-purple-light" data-tooltip="Média percentual da coluna Índice Qualidade calculada nas auditorias do período.">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="#7c3aed">
                 <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
               </svg>
@@ -270,7 +270,7 @@
         <!-- KPI 3: Serviços com problema -->
         <div class="card kpi-card">
           <div class="kpi-header">
-            <div class="kpi-icon-wrap bg-orange-light">
+            <div class="kpi-icon-wrap bg-orange-light" data-tooltip="Percentual de serviços onde a pergunta 'Q5 Ficou problema?' foi respondida como 'Sim'.">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="#f97316">
                 <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
               </svg>
@@ -278,6 +278,11 @@
             <div class="kpi-info-title">
               <span class="kpi-title">Serviços com problema</span>
             </div>
+            <button type="button" class="btn-kpi-subtle-toggle" id="btnToggleProblemsBase" title="Base: Preventivas. Clique para calcular com base nas Auditorias realizadas">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16"/>
+              </svg>
+            </button>
           </div>
           <div class="kpi-body flex-baseline-container">
             <div class="kpi-val-row">
@@ -289,7 +294,7 @@
         <!-- KPI 4: Preventivas realizadas -->
         <div class="card kpi-card">
           <div class="kpi-header">
-            <div class="kpi-icon-wrap bg-cyan-light">
+            <div class="kpi-icon-wrap bg-cyan-light" data-tooltip="Contagem total de registros de preventivas filtradas na planilha (linhas com ID válido).">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="#0891b2">
                 <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
               </svg>
@@ -308,7 +313,7 @@
         <!-- KPI 5: Auditorias realizadas -->
         <div class="card kpi-card">
           <div class="kpi-header">
-            <div class="kpi-icon-wrap bg-green-light">
+            <div class="kpi-icon-wrap bg-green-light" data-tooltip="Contagem de preventivas efetivamente auditadas (com nota preenchida em Q10 Satisfação).">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="#16a34a">
                 <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
               </svg>
@@ -320,6 +325,25 @@
           <div class="kpi-body flex-baseline-container">
             <div class="kpi-val-row">
               <span class="kpi-value text-slate-800" id="kpiAuditsValue">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 6: Cobertura -->
+        <div class="card kpi-card">
+          <div class="kpi-header">
+            <div class="kpi-icon-wrap bg-indigo-light" data-tooltip="Percentual de cobertura: (Auditorias realizadas ÷ Preventivas realizadas) × 100.">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="#4f46e5">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+              </svg>
+            </div>
+            <div class="kpi-info-title">
+              <span class="kpi-title">Cobertura</span>
+            </div>
+          </div>
+          <div class="kpi-body flex-baseline-container">
+            <div class="kpi-val-row">
+              <span class="kpi-value text-slate-800" id="kpiCoverageValue">-</span>
             </div>
           </div>
         </div>
