@@ -1412,9 +1412,16 @@ document.addEventListener('DOMContentLoaded', () => {
       kpiProblemsValue.textContent = totalAuditorias > 0 ? (pctProblemas.toFixed(1).replace('.', ',') + '%') : '-';
     }
 
+    // Preventivas realizadas (total de registros filtrados da planilha)
+    const kpiPreventivasValue = document.getElementById('kpiPreventivasValue');
+    if (kpiPreventivasValue) {
+      kpiPreventivasValue.textContent = totalAuditorias.toLocaleString('pt-BR');
+    }
+
+    // Auditorias realizadas (total de auditorias com nota atribuída em Q10 Satisfação)
     const kpiAuditsValue = document.getElementById('kpiAuditsValue');
     if (kpiAuditsValue) {
-      kpiAuditsValue.textContent = totalAuditorias.toLocaleString('pt-BR');
+      kpiAuditsValue.textContent = countSatisfaction.toLocaleString('pt-BR');
     }
 
     // --- Update Horizontal Bars: Qualidade por etapa do serviço ---
@@ -1626,7 +1633,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Visual feedback in file subtext
     if (fileSelectSub) {
-      fileSelectSub.textContent = `Exibindo ${totalAuditorias.toLocaleString('pt-BR')} auditorias filtradas`;
+      fileSelectSub.textContent = `Exibindo ${totalAuditorias.toLocaleString('pt-BR')} preventivas filtradas`;
       fileSelectSub.style.color = '#16a34a';
       fileSelectSub.style.fontWeight = '600';
     }
